@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Quick Clean - Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--navy:#0F2A4A;--blue:#2F6FED;--sky:#EAF2FF;--teal:#3FD0C9;--sun:#FFC857;--red:#E53E3E;--green:#0F6E56;--line:#D8E6FF;--ink:#3A4A63;--radius:14px;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;display:flex;justify-content:center;min-height:100vh;}
+.phone{width:390px;min-height:100vh;background:#f5f7fa;}
+
+/* ===== LOGIN ===== */
+#loginScreen{min-height:100vh;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 28px;}
+.login-mark{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:22px;margin-bottom:16px;}
+.login-title{color:white;font-size:22px;font-weight:800;margin-bottom:4px;}
+.login-sub{color:#9FB3D6;font-size:13px;margin-bottom:36px;}
+.login-card{background:white;border-radius:var(--radius);padding:24px;width:100%;}
+.l-label{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:5px;display:block;}
+.l-input{width:100%;padding:13px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:16px;letter-spacing:6px;text-align:center;font-family:inherit;outline:none;margin-bottom:14px;}
+.l-input:focus{border-color:var(--blue);}
+.l-input.error{border-color:var(--red);}
+.l-btn{width:100%;padding:14px;background:var(--blue);color:white;border:none;border-radius:999px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;}
+.l-err{color:var(--red);font-size:12px;text-align:center;margin-top:10px;display:none;}
+.l-err.show{display:block;}
+
+/* ===== ADMIN DASHBOARD ===== */
+#adminScreen{display:none;}
+.admin-nav{background:var(--navy);padding:44px 20px 14px;display:flex;align-items:center;justify-content:space-between;}
+.admin-nav-logo{display:flex;align-items:center;gap:8px;}
+.admin-mark{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:11px;}
+.admin-title{color:white;font-size:15px;font-weight:800;}
+.admin-sub{color:#9FB3D6;font-size:10px;}
+.admin-badge{background:rgba(255,255,255,0.1);color:#C9D8F5;font-size:11px;font-weight:700;padding:4px 12px;border-radius:999px;}
+.logout-btn{color:#9FB3D6;font-size:12px;font-weight:700;cursor:pointer;background:none;border:none;font-family:inherit;}
+
+.dash-content{padding:16px;}
+.dash-label{font-size:11px;font-weight:700;color:#8AA1C9;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;}
+
+/* EMPTY STATE */
+.empty-state{background:white;border-radius:var(--radius);border:1px solid var(--line);padding:32px;text-align:center;margin-bottom:16px;}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:4px;}
+.empty-sub{font-size:12px;color:#8AA1C9;}
+
+/* BOOKING CARD */
+.booking-card{background:white;border-radius:var(--radius);border:1px solid var(--line);margin-bottom:16px;overflow:hidden;}
+.bc-header{background:var(--navy);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+.bc-name{color:white;font-size:14px;font-weight:800;}
+.bc-phone{color:#9FB3D6;font-size:12px;margin-top:2px;}
+.status-pill{font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px;}
+.pill-washing{background:rgba(47,111,237,0.2);color:#7FAAFF;}
+.pill-transfer{background:rgba(255,200,87,0.2);color:var(--sun);}
+.pill-drying{background:rgba(63,208,201,0.2);color:var(--teal);}
+.pill-done{background:rgba(15,110,86,0.2);color:#3FD0A0;}
+
+.bc-body{padding:14px 16px;}
+
+/* WASHER INFO */
+.washer-info{display:flex;gap:10px;margin-bottom:14px;}
+.washer-box{flex:1;background:#f8faff;border-radius:10px;border:1px solid var(--line);padding:10px;text-align:center;}
+.wb-label{font-size:10px;font-weight:700;color:#8AA1C9;text-transform:uppercase;margin-bottom:4px;}
+.wb-num{font-size:14px;font-weight:800;color:var(--navy);margin-bottom:6px;}
+.wb-timer{font-size:20px;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums;}
+.wb-timer.done{color:var(--green);}
+.wb-track{height:4px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px;}
+.wb-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:4px;transition:width 1s linear;}
+.wb-status{font-size:10px;color:#8AA1C9;margin-top:4px;font-weight:600;}
+.wb-status.done{color:var(--green);}
+
+/* LAUNDRY PHOTO */
+.photo-section{margin-bottom:14px;}
+.photo-label{font-size:11px;font-weight:700;color:#8AA1C9;text-transform:uppercase;margin-bottom:6px;}
+.laundry-photo{width:100%;height:120px;object-fit:cover;border-radius:10px;border:1px solid var(--line);display:none;}
+.no-photo{background:#f8faff;border:1px solid var(--line);border-radius:10px;height:80px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#8AA1C9;}
+
+/* DRYER SLOT INPUT */
+.dryer-slot-section{margin-bottom:14px;}
+.ds-label{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:6px;display:block;}
+.ds-row{display:flex;flex-direction:column;gap:10px;}
+.ds-input{flex:1;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;color:var(--ink);outline:none;font-family:inherit;background:white;}
+.ds-input:focus{border-color:var(--blue);}
+.ds-input:disabled{background:#f5f7fa;color:#8AA1C9;}
+.ds-input.error{border-color:#E53E3E;}
+.ds-hint{font-size:11px;color:#8AA1C9;margin-top:4px;display:block;}
+.ds-hint.err{color:#E53E3E;}
+.ds-pair{display:flex;flex-direction:column;gap:2px;flex:1;}
+
+/* DRYER TIMER (appears after confirm) */
+.dryer-timer-section{background:#f8faff;border-radius:10px;border:1px solid var(--line);padding:12px;margin-bottom:14px;display:none;}
+.dryer-timer-section.show{display:block;}
+.dt-label{font-size:11px;font-weight:700;color:#8AA1C9;text-transform:uppercase;margin-bottom:6px;}
+.dt-display{font-size:28px;font-weight:800;color:var(--navy);text-align:center;margin-bottom:8px;font-variant-numeric:tabular-nums;}
+.dt-track{height:6px;background:var(--line);border-radius:6px;overflow:hidden;}
+.dt-fill{height:100%;background:linear-gradient(90deg,var(--teal),#2F6FED);border-radius:6px;transition:width 1s linear;}
+.dt-sub{font-size:11px;color:#8AA1C9;text-align:center;margin-top:6px;}
+
+/* ACTION BUTTONS */
+.action-row{display:flex;gap:8px;}
+.confirm-btn{flex:2;padding:13px;background:var(--blue);color:white;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.confirm-btn:disabled{background:#C0CEEA;cursor:not-allowed;}
+.confirm-btn.confirmed{background:#1B48A0;}
+.finish-btn{flex:1;padding:13px;background:var(--green);color:white;border:none;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;}
+.finish-btn:disabled{background:#C0CEEA;cursor:not-allowed;}
+
+/* NOTIFICATION LOG */
+.notif-log{margin-top:10px;}
+.notif-item{display:flex;align-items:flex-start;gap:8px;background:#f8faff;border-radius:8px;padding:8px 10px;margin-top:6px;}
+.notif-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;margin-top:4px;}
+.notif-text{font-size:11px;color:#6B7F9F;line-height:1.4;}
+.notif-time{font-size:10px;color:#8AA1C9;margin-top:1px;}
+
+/* DEMO CONTROLS */
+.demo-bar{background:#1B3F6E;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;}
+.demo-label{color:#9FB3D6;font-size:11px;font-weight:700;}
+.demo-btn{background:rgba(255,255,255,0.1);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- LOGIN SCREEN -->
+  <div id="loginScreen">
+    <div class="login-mark">QC</div>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">Quick Clean Laundry - Village 4</div>
+    <div class="login-card">
+      <label class="l-label">Enter password</label>
+      <input class="l-input" type="password" id="pwInput" placeholder="••••" maxlength="4" onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="l-btn" onclick="doLogin()">Log In</button>
+      <div class="l-err" id="loginErr">Incorrect password. Try again.</div>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="adminScreen">
+    <div class="admin-nav">
+      <div class="admin-nav-logo">
+        <div class="admin-mark">QC</div>
+        <div>
+          <div class="admin-title">Admin Panel</div>
+          <div class="admin-sub">Quick Clean - Village 4</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="admin-badge" id="bookingCount">0 bookings</div>
+        <button class="logout-btn" onclick="doLogout()">Log out</button>
+      </div>
+    </div>
+
+    <div class="dash-content">
+      <div class="dash-label">Active bookings</div>
+      <div id="bookingList">
+        <div class="empty-state">
+          <div class="empty-icon">🧺</div>
+          <div class="empty-title">No bookings yet</div>
+          <div class="empty-sub">New bookings will appear here automatically.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// AUTH
+// ============================================================
+function doLogin(){
+  const pw=document.getElementById('pwInput').value;
+  if(pw==='1234'){
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('adminScreen').style.display='block';
+    loadBookings();
+    startPolling();
+  } else {
+    document.getElementById('pwInput').classList.add('error');
+    document.getElementById('loginErr').classList.add('show');
+    document.getElementById('pwInput').value='';
+  }
+}
+
+function doLogout(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('adminScreen').style.display='none';
+  document.getElementById('pwInput').value='';
+  document.getElementById('pwInput').classList.remove('error');
+  document.getElementById('loginErr').classList.remove('show');
+}
+
+// ============================================================
+// BOOKING DATA - reads from localStorage (set by user flow)
+// Your friend will replace localStorage reads with API calls
+// ============================================================
+function getBookings(){
+  try{ return JSON.parse(localStorage.getItem('admin_bookings')||'[]'); }
+  catch(e){ return []; }
+}
+function saveBookings(b){ localStorage.setItem('admin_bookings',JSON.stringify(b)); }
+
+// FIX: once a booking is finished (manually or auto when the dryer ends),
+// we must clear the one-shot "incoming booking" flags from localStorage.
+// Otherwise the next loadBookings() poll sees the same name/phone/washerStart
+// still sitting there, doesn't find it in the (now-shorter) bookings array,
+// and re-adds the exact same finished booking right back onto the dashboard.
+function clearIncomingBookingFlags(){
+  ['user_name','user_phone','user_phone_code','user_phone_full','washer1','washer2',
+   'has_washer2','timer1_mins','timer2_mins','washer_start','dryer_machines',
+   'dryer_dur1','dryer_dur2','dryer_dur','dryer_price','attendant','laundry_img',
+   'payment_img'].forEach(k=>localStorage.removeItem(k));
+}
+
+function loadBookings(){
+  // Pull latest booking from user flow if exists and not already added
+  const name=localStorage.getItem('user_name');
+  const phone=localStorage.getItem('user_phone');
+  const washerStart=localStorage.getItem('washer_start');
+  if(name && phone && washerStart){
+    const existing=getBookings();
+    const alreadyAdded=existing.find(b=>b.washerStart===washerStart);
+    if(!alreadyAdded){
+      const dryerMachines=parseInt(localStorage.getItem('dryer_machines')||'1');
+      const newBooking={
+        id: Date.now(),
+        name: name,
+        phone: phone,
+        washer1: localStorage.getItem('washer1')||'-',
+        washer2: localStorage.getItem('washer2')||'',
+        hasWasher2: localStorage.getItem('has_washer2')==='true',
+        timer1Mins: parseInt(localStorage.getItem('timer1_mins')||localStorage.getItem('timer1')||'30'),
+        timer2Mins: parseInt(localStorage.getItem('timer2_mins')||localStorage.getItem('timer2')||'30'),
+        washerStart: parseInt(washerStart),
+        dryerMachines: dryerMachines,
+        dryerDur1: parseInt(localStorage.getItem('dryer_dur1')||localStorage.getItem('dryer_dur')||'30'),
+        dryerDur2: parseInt(localStorage.getItem('dryer_dur2')||'30'),
+        dryerPrice: localStorage.getItem('dryer_price')||'8',
+        attendant: localStorage.getItem('attendant')||'-',
+        laundryImg: localStorage.getItem('laundry_img')||'',
+        paymentImg: localStorage.getItem('payment_img')||'',
+        status: 'washing',
+        dryerSlot1: '',
+        dryerSlot2: '',
+        dryerStart: null,
+        logs: [{msg:'Booking received', time: new Date().toLocaleTimeString()}]
+      };
+      existing.push(newBooking);
+      saveBookings(existing);
+      // Once we've taken the booking in, clear the incoming flags so this
+      // exact booking can never be re-created by a later poll.
+      clearIncomingBookingFlags();
+    }
+  }
+  renderBookings();
+}
+
+function addDemoBooking(){
+  const existing=getBookings();
+  const demo={
+    id: Date.now(),
+    name: 'Ahmad Faris',
+    phone: '0123456789',
+    washer1: 'W-04',
+    washer2: 'W-05',
+    hasWasher2: true,
+    timer1Mins: 3,
+    timer2Mins: 5,
+    washerStart: Date.now(),
+    dryerMachines: 2,
+    dryerDur1: 35,
+    dryerDur2: 30,
+    dryerPrice: '10',
+    attendant: 'Female',
+    laundryImg: '',
+    paymentImg: '',
+    status: 'washing',
+    dryerSlot1: '',
+    dryerSlot2: '',
+    dryerStart: null,
+    logs: [{msg:'Booking received', time: new Date().toLocaleTimeString()}]
+  };
+  existing.push(demo);
+  saveBookings(existing);
+  renderBookings();
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function renderBookings(){
+  const bookings=getBookings();
+  const list=document.getElementById('bookingList');
+  document.getElementById('bookingCount').textContent=bookings.length+' booking'+(bookings.length!==1?'s':'');
+
+  if(bookings.length===0){
+    list.innerHTML=`<div class="empty-state"><div class="empty-icon">🧺</div><div class="empty-title">No bookings yet</div><div class="empty-sub">New bookings will appear here automatically.</div></div>`;
+    return;
+  }
+
+  // FIX: renderBookings() rebuilds the entire list every time it runs
+  // (including every 5s from the polling loop). If the admin was mid-typing
+  // a dryer slot, the rebuild was overwriting it with the old saved value
+  // (usually blank), making it look like the field "keeps getting erased".
+  // We grab whatever's currently typed before rebuilding, then restore it.
+  const unsavedSlotValues={};
+  bookings.forEach(b=>{
+    const input1=document.getElementById('slot1-'+b.id);
+    if(input1 && !input1.disabled){ unsavedSlotValues['1-'+b.id]=input1.value; }
+    const input2=document.getElementById('slot2-'+b.id);
+    if(input2 && !input2.disabled){ unsavedSlotValues['2-'+b.id]=input2.value; }
+  });
+
+  list.innerHTML='';
+  bookings.forEach(b=>{
+    const card=document.createElement('div');
+    card.className='booking-card';
+    card.id='card-'+b.id;
+
+    const pillClass={'washing':'pill-washing','transfer':'pill-transfer','drying':'pill-drying','done':'pill-done'}[b.status]||'pill-washing';
+    const pillLabel={'washing':'Washing','transfer':'Transferring','drying':'Drying','done':'Done'}[b.status]||'Washing';
+
+    const w2html=b.hasWasher2?`
+      <div class="washer-box" id="wb2-${b.id}">
+        <div class="wb-label">Washer 2</div>
+        <div class="wb-num">${b.washer2}</div>
+        <div class="wb-timer" id="wt2-${b.id}">--:--</div>
+        <div class="wb-track"><div class="wb-fill" id="wf2-${b.id}" style="width:100%"></div></div>
+        <div class="wb-status" id="ws2-${b.id}">Running</div>
+      </div>`:'';
+
+    const photoHtml=b.laundryImg
+      ?`<img class="laundry-photo" src="${b.laundryImg}" style="display:block;">`
+      :`<div class="no-photo">No photo uploaded</div>`;
+
+    const confirmDisabled=b.status!=='washing'?'disabled':'';
+    const confirmLabel=b.status==='washing'?'Confirm Transfer':(b.status==='transfer'?'Transferring...':'Transferred');
+    const confirmClass=b.status!=='washing'?'confirmed':'';
+    const finishDisabled=(b.status==='washing'||b.status==='done')?'disabled':'';
+
+    const logsHtml=b.logs.map(l=>`
+      <div class="notif-item">
+        <div class="notif-dot"></div>
+        <div><div class="notif-text">${l.msg}</div><div class="notif-time">${l.time}</div></div>
+      </div>`).join('');
+
+    const dryerTimerShow=b.status==='drying'||b.status==='done'?'show':'';
+    const v1=unsavedSlotValues['1-'+b.id]!==undefined?unsavedSlotValues['1-'+b.id]:b.dryerSlot1;
+    const v2=unsavedSlotValues['2-'+b.id]!==undefined?unsavedSlotValues['2-'+b.id]:b.dryerSlot2;
+    const slotDisabled=b.status!=='washing';
+
+    const slot2InputHtml=b.dryerMachines===2?`
+          <div class="ds-pair">
+            <input class="ds-input" type="text" id="slot2-${b.id}" placeholder="e.g. D2" value="${v2}" oninput="formatDryerSlot(${b.id},2)" ${slotDisabled?'disabled':''}>
+            <span class="ds-hint" id="hint2-${b.id}">D1 to D10, different from Dryer 1</span>
+          </div>`:'';
+
+    const dryerBox2Html=b.dryerMachines===2?`
+          <div class="washer-box" id="dtb2-${b.id}">
+            <div class="wb-label">Dryer 2</div>
+            <div class="wb-num">${b.dryerSlot2||'-'}</div>
+            <div class="wb-timer" id="dtd2-${b.id}">--:--</div>
+            <div class="wb-track"><div class="wb-fill" id="dtf2-${b.id}" style="width:100%"></div></div>
+            <div class="wb-status" id="dts2-${b.id}">Running</div>
+          </div>`:'';
+
+    const dryerTimerSectionHtml=`
+        <div class="dryer-timer-section ${dryerTimerShow}" id="dt-${b.id}">
+          <div class="dt-label">Dryer countdown</div>
+          <div class="washer-info" style="margin-bottom:0;">
+            <div class="washer-box" id="dtb1-${b.id}">
+              <div class="wb-label">Dryer ${b.dryerMachines===2?'1':''}</div>
+              <div class="wb-num">${b.dryerSlot1||'-'}</div>
+              <div class="wb-timer" id="dtd1-${b.id}">--:--</div>
+              <div class="wb-track"><div class="wb-fill" id="dtf1-${b.id}" style="width:100%"></div></div>
+              <div class="wb-status" id="dts1-${b.id}">Running</div>
+            </div>
+            ${dryerBox2Html}
+          </div>
+          <div class="dt-sub">Auto-notifies user when all dryers are done</div>
+        </div>`;
+
+    card.innerHTML=`
+      <div class="bc-header">
+        <div>
+          <div class="bc-name">${b.name}</div>
+          <div class="bc-phone">📱 ${b.phone}</div>
+        </div>
+        <div class="status-pill ${pillClass}" id="pill-${b.id}">${pillLabel}</div>
+      </div>
+      <div class="bc-body">
+
+        <div class="washer-info">
+          <div class="washer-box" id="wb1-${b.id}">
+            <div class="wb-label">Washer ${b.hasWasher2?'1':''}</div>
+            <div class="wb-num">${b.washer1}</div>
+            <div class="wb-timer" id="wt1-${b.id}">--:--</div>
+            <div class="wb-track"><div class="wb-fill" id="wf1-${b.id}" style="width:100%"></div></div>
+            <div class="wb-status" id="ws1-${b.id}">Running</div>
+          </div>
+          ${w2html}
+        </div>
+
+        <div class="photo-section">
+          <div class="photo-label">Laundry bag photo</div>
+          ${photoHtml}
+        </div>
+
+        <div class="dryer-slot-section">
+          <label class="ds-label">Assign dryer slot${b.dryerMachines===2?'s':''}</label>
+          <div class="ds-row">
+            <div class="ds-pair">
+              <input class="ds-input" type="text" id="slot1-${b.id}" placeholder="e.g. D1" value="${v1}" oninput="formatDryerSlot(${b.id},1)" ${slotDisabled?'disabled':''}>
+              <span class="ds-hint" id="hint1-${b.id}">D1 to D10 only</span>
+            </div>
+            ${slot2InputHtml}
+          </div>
+        </div>
+
+        ${dryerTimerSectionHtml}
+
+        <div class="action-row" style="margin-bottom:10px;">
+          <button class="confirm-btn ${confirmClass}" id="cbtn-${b.id}" ${confirmDisabled} onclick="confirmTransfer(${b.id})">${confirmLabel}</button>
+          <button class="finish-btn" id="fbtn-${b.id}" ${finishDisabled} onclick="finishBooking(${b.id})">Finish</button>
+        </div>
+
+        <div class="notif-log" id="log-${b.id}">${logsHtml}</div>
+      </div>`;
+
+    list.appendChild(card);
+  });
+}
+
+// ============================================================
+// TIMERS
+// ============================================================
+function formatTime(s){
+  if(s<=0) return '00:00';
+  const m=Math.floor(s/60), sec=s%60;
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+function tickAllTimers(){
+  const bookings=getBookings();
+  bookings.forEach(b=>{
+    // Washer 1
+    const t1el=document.getElementById('wt1-'+b.id);
+    const wf1=document.getElementById('wf1-'+b.id);
+    const ws1=document.getElementById('ws1-'+b.id);
+    if(t1el){
+      const t1total=b.timer1Mins*60;
+      const elapsed=Math.floor((Date.now()-b.washerStart)/1000);
+      const t1rem=Math.max(0,t1total-elapsed);
+      t1el.textContent=formatTime(t1rem);
+      if(wf1) wf1.style.width=(t1rem/t1total*100)+'%';
+      if(t1rem===0){ t1el.classList.add('done'); if(ws1){ws1.textContent='Done';ws1.classList.add('done');} }
+    }
+    // Washer 2
+    if(b.hasWasher2){
+      const t2el=document.getElementById('wt2-'+b.id);
+      const wf2=document.getElementById('wf2-'+b.id);
+      const ws2=document.getElementById('ws2-'+b.id);
+      if(t2el){
+        const t2total=b.timer2Mins*60;
+        const elapsed=Math.floor((Date.now()-b.washerStart)/1000);
+        const t2rem=Math.max(0,t2total-elapsed);
+        t2el.textContent=formatTime(t2rem);
+        if(wf2) wf2.style.width=(t2rem/t2total*100)+'%';
+        if(t2rem===0){ t2el.classList.add('done'); if(ws2){ws2.textContent='Done';ws2.classList.add('done');} }
+      }
+    }
+    // Dryer timer(s)
+    if((b.status==='drying')&&b.dryerStart){
+      const elapsed=Math.floor((Date.now()-b.dryerStart)/1000);
+
+      const dtd1=document.getElementById('dtd1-'+b.id);
+      const dtf1=document.getElementById('dtf1-'+b.id);
+      const dts1=document.getElementById('dts1-'+b.id);
+      let dryer1Done=false;
+      if(dtd1){
+        const total1=b.dryerDur1*60;
+        const rem1=Math.max(0,total1-elapsed);
+        dtd1.textContent=formatTime(rem1);
+        if(dtf1) dtf1.style.width=(rem1/total1*100)+'%';
+        if(rem1===0){ dtd1.classList.add('done'); if(dts1){dts1.textContent='Done';dts1.classList.add('done');} dryer1Done=true; }
+      }
+
+      let dryer2Done=true; // true (i.e. "not blocking") if there's no second dryer
+      if(b.dryerMachines===2){
+        const dtd2=document.getElementById('dtd2-'+b.id);
+        const dtf2=document.getElementById('dtf2-'+b.id);
+        const dts2=document.getElementById('dts2-'+b.id);
+        dryer2Done=false;
+        if(dtd2){
+          const total2=b.dryerDur2*60;
+          const rem2=Math.max(0,total2-elapsed);
+          dtd2.textContent=formatTime(rem2);
+          if(dtf2) dtf2.style.width=(rem2/total2*100)+'%';
+          if(rem2===0){ dtd2.classList.add('done'); if(dts2){dts2.textContent='Done';dts2.classList.add('done');} dryer2Done=true; }
+        }
+      }
+
+      if(dryer1Done && dryer2Done){
+        // Auto finish when all dryers for this booking are done
+        const allBookings=getBookings();
+        const idx=allBookings.findIndex(x=>x.id===b.id);
+        if(idx>-1 && allBookings[idx].status==='drying'){
+          const slotMsg=b.dryerMachines===2?(b.dryerSlot1+' & '+b.dryerSlot2):b.dryerSlot1;
+          // ===== API HOOK: Send WhatsApp notification =====
+          sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! Head to dryer '+slotMsg+' to collect. - Quick Clean');
+          // Set user tracker to done
+          localStorage.setItem('booking_status','done');
+          // Remove booking from list entirely so it clears off the dashboard
+          allBookings.splice(idx,1);
+          saveBookings(allBookings);
+          // Clear any leftover one-shot booking flags so polling can't resurrect it
+          clearIncomingBookingFlags();
+          renderBookings();
+        }
+      }
+    }
+  });
+}
+
+// ============================================================
+// DRYER SLOT VALIDATION (D1 - D10 only, no duplicates)
+// ============================================================
+const dryerSlotRegex=/^[Dd](10|[1-9])$/;
+
+function formatDryerSlot(id,which){
+  const el=document.getElementById('slot'+which+'-'+id);
+  let v=el.value;
+  if(v.length>0 && v[0].toLowerCase()==='d'){ v='D'+v.slice(1); }
+  el.value=v;
+  validateDryerSlot(id,which);
+  // if dryer 1 changes, re-check dryer 2's duplicate status live
+  if(which===1 && document.getElementById('slot2-'+id) && document.getElementById('slot2-'+id).value.trim()){
+    validateDryerSlot(id,2);
+  }
+}
+
+function validateDryerSlot(id,which){
+  const el=document.getElementById('slot'+which+'-'+id);
+  const hint=document.getElementById('hint'+which+'-'+id);
+  const val=el.value.trim();
+  el.classList.remove('error');
+  if(hint) hint.classList.remove('err');
+
+  if(!val){
+    if(hint) hint.textContent= which===2?'D1 to D10, different from Dryer 1':'D1 to D10 only';
+    return true;
+  }
+  if(!dryerSlotRegex.test(val)){
+    el.classList.add('error');
+    if(hint){ hint.classList.add('err'); hint.textContent='Invalid. Use D1 to D10 only (e.g. D1, D7, D10).'; }
+    return false;
+  }
+  // duplicate check against the other dryer slot on this same booking
+  const otherWhich=which===1?2:1;
+  const otherEl=document.getElementById('slot'+otherWhich+'-'+id);
+  if(otherEl){
+    const otherVal=otherEl.value.trim().toUpperCase();
+    if(otherVal && otherVal===val.toUpperCase()){
+      el.classList.add('error');
+      if(hint){ hint.classList.add('err'); hint.textContent='Already used for the other dryer. Choose a different one.'; }
+      return false;
+    }
+  }
+  if(hint){ hint.classList.remove('err'); hint.textContent= which===2?'D1 to D10, different from Dryer 1':'D1 to D10 only'; }
+  return true;
+}
+
+// ============================================================
+// ADMIN ACTIONS
+// ============================================================
+function confirmTransfer(id){
+  const bookings=getBookings();
+  const idx=bookings.findIndex(b=>b.id===id);
+  if(idx===-1) return;
+  const b=bookings[idx];
+
+  const slot1El=document.getElementById('slot1-'+id);
+  const slot1=slot1El.value.trim();
+  let valid=true;
+
+  if(!slot1){ slot1El.classList.add('error'); valid=false; }
+  else if(!validateDryerSlot(id,1)){ valid=false; }
+
+  let slot2='';
+  if(b.dryerMachines===2){
+    const slot2El=document.getElementById('slot2-'+id);
+    slot2=slot2El.value.trim();
+    if(!slot2){ slot2El.classList.add('error'); valid=false; }
+    else if(!validateDryerSlot(id,2)){ valid=false; }
+  }
+
+  if(!valid) return;
+
+  b.status='transfer';
+  b.dryerSlot1=slot1;
+  b.dryerSlot2=slot2;
+  const slotMsg=b.dryerMachines===2?('dryers '+slot1+' & '+slot2):('dryer slot: '+slot1);
+  b.logs.push({msg:'🔁 Transfer confirmed - '+slotMsg+'. WhatsApp sent: "Your laundry is being transferred to the dryer!"', time: new Date().toLocaleTimeString()});
+
+  // Send transfer to Google Sheets
+  fetch('https://script.google.com/macros/s/AKfycbwzNTkJ48affWRvsL3dCVTdUStFqkK8LEuutgdvLH3fXDC1fvzmqOMpLoBM_rCwxavdBw/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action:     'updateTransfer',
+      name:       b.name,
+      phone:      b.phone,
+      dryerSlot1: slot1,
+      dryerSlot2: slot2 || ''
+    })
+  }).catch(() => {});
+
+  // ===== API HOOK: Send WhatsApp notification =====
+  sendWhatsApp(b.phone, 'Your laundry is being transferred to '+(b.dryerMachines===2?('dryers '+slot1+' & '+slot2):('dryer '+slot1))+' now! - Quick Clean Village 4');
+
+  // Update user tracker
+  localStorage.setItem('booking_status','transfer');
+
+  // After 3 seconds move to drying and start dryer timer
+  setTimeout(()=>{
+    const b2=getBookings();
+    const i2=b2.findIndex(x=>x.id===id);
+    if(i2>-1){
+      b2[i2].status='drying';
+      b2[i2].dryerStart=Date.now();
+      const durMsg=b2[i2].dryerMachines===2?(b2[i2].dryerDur1+' / '+b2[i2].dryerDur2+' min timers'):(b2[i2].dryerDur1+' min timer');
+      b2[i2].logs.push({msg:'🌡️ Dryer started - '+durMsg+' running', time: new Date().toLocaleTimeString()});
+      saveBookings(b2);
+      localStorage.setItem('booking_status','drying');
+      localStorage.setItem('dryer_start', Date.now());
+      renderBookings();
+    }
+  },3000);
+
+  saveBookings(bookings);
+  renderBookings();
+}
+
+function finishBooking(id){
+  const bookings = getBookings();
+  const idx = bookings.findIndex(b => b.id === id);
+  if(idx === -1) return;
+  const b = bookings[idx];
+
+  // Send to Google Sheets
+  fetch('https://script.google.com/macros/s/AKfycbwzNTkJ48affWRvsL3dCVTdUStFqkK8LEuutgdvLH3fXDC1fvzmqOMpLoBM_rCwxavdBw/exec', {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action:        'completeBooking',
+      name:          b.name,
+      phone:         b.phone,
+      washer1:       b.washer1,
+      washer2:       b.washer2  || '',
+      dryerSlot1:    b.dryerSlot1,
+      dryerSlot2:    b.dryerSlot2 || '',
+      dryerMachines: b.dryerMachines,
+      dryerDur1:     b.dryerDur1,
+      dryerDur2:     b.dryerDur2 || '-',
+      dryerPrice:    b.dryerPrice,
+      attendant:     b.attendant
+    })
+  }).catch(() => {});
+
+  sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! - Quick Clean');
+  localStorage.setItem('booking_status', 'done');
+  bookings.splice(idx, 1);
+  saveBookings(bookings);
+  clearIncomingBookingFlags();
+  renderBookings();
+}
+
+// ============================================================
+// WHATSAPP API HOOK
+// Your friend connects this to the actual WhatsApp Business API
+// Currently opens WhatsApp with pre-filled message as fallback
+// ============================================================
+function sendWhatsApp(phone, message){
+  // ===== REPLACE THIS with actual API call =====
+  // Example: fetch('/api/whatsapp', {method:'POST', body: JSON.stringify({phone, message})})
+  console.log('WhatsApp API call -> To: '+phone+' | Message: '+message);
+  // Fallback: open WhatsApp link (remove once API is connected)
+  // window.open('https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(message));
+}
+
+// ============================================================
+// POLLING - checks for new bookings every 5 seconds
+// Replace with WebSocket or API polling once backend is ready
+// ============================================================
+let pollInterval=null;
+let timerInterval=null;
+function startPolling(){
+  // FIX: previously the 1-second timer interval was never stored/cleared,
+  // so every time startPolling() ran (e.g. logging out and back in) a NEW
+  // interval stacked on top of the old ones. Multiple intervals firing on
+  // the same elements is what caused the "looping" / glitchy timer display.
+  if(pollInterval) clearInterval(pollInterval);
+  if(timerInterval) clearInterval(timerInterval);
+  tickAllTimers();
+  timerInterval=setInterval(tickAllTimers, 1000);
+  pollInterval=setInterval(()=>{ loadBookings(); }, 5000);
+}
+</script>
+</body>
+</html>
