@@ -164,6 +164,11 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#f0f4f8;display:flex;
 
 <script>
 // ============================================================
+// CONFIG
+// ============================================================
+const API_URL = 'https://script.google.com/macros/s/AKfycbwzNTkJ48affWRvsL3dCVTdUStFqkK8LEuutgdvLH3fXDC1fvzmqOMpLoBM_rCwxavdBw/exec';
+
+// ============================================================
 // AUTH
 // ============================================================
 function doLogin(){
@@ -186,100 +191,29 @@ function doLogout(){
   document.getElementById('pwInput').value='';
   document.getElementById('pwInput').classList.remove('error');
   document.getElementById('loginErr').classList.remove('show');
+  if(pollInterval) clearInterval(pollInterval);
+  if(timerInterval) clearInterval(timerInterval);
 }
 
 // ============================================================
-// BOOKING DATA - reads from localStorage (set by user flow)
-// Your friend will replace localStorage reads with API calls
+// BOOKING DATA - now fetched live from Google Sheets
 // ============================================================
+let cachedBookings=[];
+
 function getBookings(){
-  try{ return JSON.parse(localStorage.getItem('admin_bookings')||'[]'); }
-  catch(e){ return []; }
-}
-function saveBookings(b){ localStorage.setItem('admin_bookings',JSON.stringify(b)); }
-
-// FIX: once a booking is finished (manually or auto when the dryer ends),
-// we must clear the one-shot "incoming booking" flags from localStorage.
-// Otherwise the next loadBookings() poll sees the same name/phone/washerStart
-// still sitting there, doesn't find it in the (now-shorter) bookings array,
-// and re-adds the exact same finished booking right back onto the dashboard.
-function clearIncomingBookingFlags(){
-  ['user_name','user_phone','user_phone_code','user_phone_full','washer1','washer2',
-   'has_washer2','timer1_mins','timer2_mins','washer_start','dryer_machines',
-   'dryer_dur1','dryer_dur2','dryer_dur','dryer_price','attendant','laundry_img',
-   'payment_img'].forEach(k=>localStorage.removeItem(k));
+  return cachedBookings;
 }
 
-function loadBookings(){
-  // Pull latest booking from user flow if exists and not already added
-  const name=localStorage.getItem('user_name');
-  const phone=localStorage.getItem('user_phone');
-  const washerStart=localStorage.getItem('washer_start');
-  if(name && phone && washerStart){
-    const existing=getBookings();
-    const alreadyAdded=existing.find(b=>b.washerStart===washerStart);
-    if(!alreadyAdded){
-      const dryerMachines=parseInt(localStorage.getItem('dryer_machines')||'1');
-      const newBooking={
-        id: Date.now(),
-        name: name,
-        phone: phone,
-        washer1: localStorage.getItem('washer1')||'-',
-        washer2: localStorage.getItem('washer2')||'',
-        hasWasher2: localStorage.getItem('has_washer2')==='true',
-        timer1Mins: parseInt(localStorage.getItem('timer1_mins')||localStorage.getItem('timer1')||'30'),
-        timer2Mins: parseInt(localStorage.getItem('timer2_mins')||localStorage.getItem('timer2')||'30'),
-        washerStart: parseInt(washerStart),
-        dryerMachines: dryerMachines,
-        dryerDur1: parseInt(localStorage.getItem('dryer_dur1')||localStorage.getItem('dryer_dur')||'30'),
-        dryerDur2: parseInt(localStorage.getItem('dryer_dur2')||'30'),
-        dryerPrice: localStorage.getItem('dryer_price')||'8',
-        attendant: localStorage.getItem('attendant')||'-',
-        laundryImg: localStorage.getItem('laundry_img')||'',
-        paymentImg: localStorage.getItem('payment_img')||'',
-        status: 'washing',
-        dryerSlot1: '',
-        dryerSlot2: '',
-        dryerStart: null,
-        logs: [{msg:'Booking received', time: new Date().toLocaleTimeString()}]
-      };
-      existing.push(newBooking);
-      saveBookings(existing);
-      // Once we've taken the booking in, clear the incoming flags so this
-      // exact booking can never be re-created by a later poll.
-      clearIncomingBookingFlags();
+async function loadBookings(){
+  try{
+    const res=await fetch(API_URL);
+    const data=await res.json();
+    if(data.status==='ok'){
+      cachedBookings=data.bookings||[];
     }
+  }catch(e){
+    console.error('Failed to load bookings:',e);
   }
-  renderBookings();
-}
-
-function addDemoBooking(){
-  const existing=getBookings();
-  const demo={
-    id: Date.now(),
-    name: 'Ahmad Faris',
-    phone: '0123456789',
-    washer1: 'W-04',
-    washer2: 'W-05',
-    hasWasher2: true,
-    timer1Mins: 3,
-    timer2Mins: 5,
-    washerStart: Date.now(),
-    dryerMachines: 2,
-    dryerDur1: 35,
-    dryerDur2: 30,
-    dryerPrice: '10',
-    attendant: 'Female',
-    laundryImg: '',
-    paymentImg: '',
-    status: 'washing',
-    dryerSlot1: '',
-    dryerSlot2: '',
-    dryerStart: null,
-    logs: [{msg:'Booking received', time: new Date().toLocaleTimeString()}]
-  };
-  existing.push(demo);
-  saveBookings(existing);
   renderBookings();
 }
 
@@ -296,11 +230,6 @@ function renderBookings(){
     return;
   }
 
-  // FIX: renderBookings() rebuilds the entire list every time it runs
-  // (including every 5s from the polling loop). If the admin was mid-typing
-  // a dryer slot, the rebuild was overwriting it with the old saved value
-  // (usually blank), making it look like the field "keeps getting erased".
-  // We grab whatever's currently typed before rebuilding, then restore it.
   const unsavedSlotValues={};
   bookings.forEach(b=>{
     const input1=document.getElementById('slot1-'+b.id);
@@ -336,7 +265,7 @@ function renderBookings(){
     const confirmClass=b.status!=='washing'?'confirmed':'';
     const finishDisabled=(b.status==='washing'||b.status==='done')?'disabled':'';
 
-    const logsHtml=b.logs.map(l=>`
+    const logsHtml=(b.logs||[]).map(l=>`
       <div class="notif-item">
         <div class="notif-dot"></div>
         <div><div class="notif-text">${l.msg}</div><div class="notif-time">${l.time}</div></div>
@@ -441,7 +370,6 @@ function formatTime(s){
 function tickAllTimers(){
   const bookings=getBookings();
   bookings.forEach(b=>{
-    // Washer 1
     const t1el=document.getElementById('wt1-'+b.id);
     const wf1=document.getElementById('wf1-'+b.id);
     const ws1=document.getElementById('ws1-'+b.id);
@@ -453,7 +381,6 @@ function tickAllTimers(){
       if(wf1) wf1.style.width=(t1rem/t1total*100)+'%';
       if(t1rem===0){ t1el.classList.add('done'); if(ws1){ws1.textContent='Done';ws1.classList.add('done');} }
     }
-    // Washer 2
     if(b.hasWasher2){
       const t2el=document.getElementById('wt2-'+b.id);
       const wf2=document.getElementById('wf2-'+b.id);
@@ -467,7 +394,6 @@ function tickAllTimers(){
         if(t2rem===0){ t2el.classList.add('done'); if(ws2){ws2.textContent='Done';ws2.classList.add('done');} }
       }
     }
-    // Dryer timer(s)
     if((b.status==='drying')&&b.dryerStart){
       const elapsed=Math.floor((Date.now()-b.dryerStart)/1000);
 
@@ -483,7 +409,7 @@ function tickAllTimers(){
         if(rem1===0){ dtd1.classList.add('done'); if(dts1){dts1.textContent='Done';dts1.classList.add('done');} dryer1Done=true; }
       }
 
-      let dryer2Done=true; // true (i.e. "not blocking") if there's no second dryer
+      let dryer2Done=true;
       if(b.dryerMachines===2){
         const dtd2=document.getElementById('dtd2-'+b.id);
         const dtf2=document.getElementById('dtf2-'+b.id);
@@ -499,29 +425,16 @@ function tickAllTimers(){
       }
 
       if(dryer1Done && dryer2Done){
-        // Auto finish when all dryers for this booking are done
-        const allBookings=getBookings();
-        const idx=allBookings.findIndex(x=>x.id===b.id);
-        if(idx>-1 && allBookings[idx].status==='drying'){
-          const slotMsg=b.dryerMachines===2?(b.dryerSlot1+' & '+b.dryerSlot2):b.dryerSlot1;
-          // ===== API HOOK: Send WhatsApp notification =====
-          sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! Head to dryer '+slotMsg+' to collect. - Quick Clean');
-          // Set user tracker to done
-          localStorage.setItem('booking_status','done');
-          // Remove booking from list entirely so it clears off the dashboard
-          allBookings.splice(idx,1);
-          saveBookings(allBookings);
-          // Clear any leftover one-shot booking flags so polling can't resurrect it
-          clearIncomingBookingFlags();
-          renderBookings();
-        }
+        const slotMsg=b.dryerMachines===2?(b.dryerSlot1+' & '+b.dryerSlot2):b.dryerSlot1;
+        sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! Head to dryer '+slotMsg+' to collect. - Quick Clean');
+        finishBookingSilently(b);
       }
     }
   });
 }
 
 // ============================================================
-// DRYER SLOT VALIDATION (D1 - D10 only, no duplicates)
+// DRYER SLOT VALIDATION
 // ============================================================
 const dryerSlotRegex=/^[Dd](10|[1-9])$/;
 
@@ -531,7 +444,6 @@ function formatDryerSlot(id,which){
   if(v.length>0 && v[0].toLowerCase()==='d'){ v='D'+v.slice(1); }
   el.value=v;
   validateDryerSlot(id,which);
-  // if dryer 1 changes, re-check dryer 2's duplicate status live
   if(which===1 && document.getElementById('slot2-'+id) && document.getElementById('slot2-'+id).value.trim()){
     validateDryerSlot(id,2);
   }
@@ -553,7 +465,6 @@ function validateDryerSlot(id,which){
     if(hint){ hint.classList.add('err'); hint.textContent='Invalid. Use D1 to D10 only (e.g. D1, D7, D10).'; }
     return false;
   }
-  // duplicate check against the other dryer slot on this same booking
   const otherWhich=which===1?2:1;
   const otherEl=document.getElementById('slot'+otherWhich+'-'+id);
   if(otherEl){
@@ -597,11 +508,8 @@ function confirmTransfer(id){
   b.status='transfer';
   b.dryerSlot1=slot1;
   b.dryerSlot2=slot2;
-  const slotMsg=b.dryerMachines===2?('dryers '+slot1+' & '+slot2):('dryer slot: '+slot1);
-  b.logs.push({msg:'🔁 Transfer confirmed - '+slotMsg+'. WhatsApp sent: "Your laundry is being transferred to the dryer!"', time: new Date().toLocaleTimeString()});
 
-  // Send transfer to Google Sheets
-  fetch('https://script.google.com/macros/s/AKfycbwzNTkJ48affWRvsL3dCVTdUStFqkK8LEuutgdvLH3fXDC1fvzmqOMpLoBM_rCwxavdBw/exec', {
+  fetch(API_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain' },
@@ -614,40 +522,36 @@ function confirmTransfer(id){
     })
   }).catch(() => {});
 
-  // ===== API HOOK: Send WhatsApp notification =====
   sendWhatsApp(b.phone, 'Your laundry is being transferred to '+(b.dryerMachines===2?('dryers '+slot1+' & '+slot2):('dryer '+slot1))+' now! - Quick Clean Village 4');
 
-  // Update user tracker
-  localStorage.setItem('booking_status','transfer');
-
-  // After 3 seconds move to drying and start dryer timer
-  setTimeout(()=>{
-    const b2=getBookings();
-    const i2=b2.findIndex(x=>x.id===id);
-    if(i2>-1){
-      b2[i2].status='drying';
-      b2[i2].dryerStart=Date.now();
-      const durMsg=b2[i2].dryerMachines===2?(b2[i2].dryerDur1+' / '+b2[i2].dryerDur2+' min timers'):(b2[i2].dryerDur1+' min timer');
-      b2[i2].logs.push({msg:'🌡️ Dryer started - '+durMsg+' running', time: new Date().toLocaleTimeString()});
-      saveBookings(b2);
-      localStorage.setItem('booking_status','drying');
-      localStorage.setItem('dryer_start', Date.now());
-      renderBookings();
-    }
-  },3000);
-
-  saveBookings(bookings);
   renderBookings();
+
+  setTimeout(()=>{
+    fetch(API_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'startDrying',
+        name:   b.name,
+        phone:  b.phone
+      })
+    }).catch(() => {});
+    loadBookings();
+  },3000);
 }
 
 function finishBooking(id){
-  const bookings = getBookings();
-  const idx = bookings.findIndex(b => b.id === id);
-  if(idx === -1) return;
-  const b = bookings[idx];
+  const bookings=getBookings();
+  const idx=bookings.findIndex(b=>b.id===id);
+  if(idx===-1) return;
+  const b=bookings[idx];
+  sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! - Quick Clean');
+  finishBookingSilently(b);
+}
 
-  // Send to Google Sheets
-  fetch('https://script.google.com/macros/s/AKfycbwzNTkJ48affWRvsL3dCVTdUStFqkK8LEuutgdvLH3fXDC1fvzmqOMpLoBM_rCwxavdBw/exec', {
+function finishBookingSilently(b){
+  fetch(API_URL, {
     method: 'POST',
     mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain' },
@@ -666,39 +570,22 @@ function finishBooking(id){
       attendant:     b.attendant
     })
   }).catch(() => {});
-
-  sendWhatsApp(b.phone, 'Your laundry is ready for pickup at Village 4! - Quick Clean');
-  localStorage.setItem('booking_status', 'done');
-  bookings.splice(idx, 1);
-  saveBookings(bookings);
-  clearIncomingBookingFlags();
-  renderBookings();
+  loadBookings();
 }
 
 // ============================================================
 // WHATSAPP API HOOK
-// Your friend connects this to the actual WhatsApp Business API
-// Currently opens WhatsApp with pre-filled message as fallback
 // ============================================================
 function sendWhatsApp(phone, message){
-  // ===== REPLACE THIS with actual API call =====
-  // Example: fetch('/api/whatsapp', {method:'POST', body: JSON.stringify({phone, message})})
   console.log('WhatsApp API call -> To: '+phone+' | Message: '+message);
-  // Fallback: open WhatsApp link (remove once API is connected)
-  // window.open('https://wa.me/'+phone.replace(/\D/g,'')+'?text='+encodeURIComponent(message));
 }
 
 // ============================================================
-// POLLING - checks for new bookings every 5 seconds
-// Replace with WebSocket or API polling once backend is ready
+// POLLING - checks Google Sheets every 5 seconds
 // ============================================================
 let pollInterval=null;
 let timerInterval=null;
 function startPolling(){
-  // FIX: previously the 1-second timer interval was never stored/cleared,
-  // so every time startPolling() ran (e.g. logging out and back in) a NEW
-  // interval stacked on top of the old ones. Multiple intervals firing on
-  // the same elements is what caused the "looping" / glitchy timer display.
   if(pollInterval) clearInterval(pollInterval);
   if(timerInterval) clearInterval(timerInterval);
   tickAllTimers();
