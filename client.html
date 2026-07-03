@@ -1266,7 +1266,9 @@ function confirmBooking() {
     dryerMachines: localStorage.getItem('dryer_machines') || '1',
     dryerDur1:    localStorage.getItem('dryer_dur1')    || '30',
     dryerDur2:    localStorage.getItem('dryer_dur2')    || '-',
-    dryerPrice:   localStorage.getItem('dryer_price')   || '-'
+    dryerPrice:   localStorage.getItem('dryer_price')   || '-',
+    laundryImg:   localStorage.getItem('laundry_img')   || '',
+    paymentImg:   localStorage.getItem('payment_img')   || ''
   });
 
   localStorage.setItem('washer_start', Date.now());
